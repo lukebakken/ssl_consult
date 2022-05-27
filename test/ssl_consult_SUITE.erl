@@ -23,9 +23,7 @@ all() ->
     [{group, tests}].
 
 all_tests() ->
-    [inet_tls_enabled,
-     replication_over_tls_configuration_with_optfile,
-     replication_over_tls_configuration_with_opt].
+    [consult_file].
 
 groups() ->
     [{tests, [], all_tests()}].
@@ -52,7 +50,7 @@ end_per_testcase(_TestCase, _Config) ->
 %%% Test cases
 %%%===================================================================
 
-replication_over_tls_configuration_with_optfile(Config) ->
+consult_file(Config) ->
     ExpectedOkConfig =
         [{replication_transport, ssl},
          {replication_server_ssl_options,
@@ -69,35 +67,5 @@ replication_over_tls_configuration_with_optfile(Config) ->
            {secure_renegotiate, true},
            {verify, verify_peer},
            {fail_if_no_peer_cert, true}]}],
-    [begin
-         InitArgs =
-             [{proto_dist, ["inet_tls"]},
-              {ssl_dist_optfile, [?config(data_dir, Config) ++ File]}],
-         ?assertEqual(ExpectedOkConfig,
-                      replication_over_tls_configuration(InitArgs))
-     end
-     || File
-            <- ["inter_node_tls_server_client_ok.config",
-                "inter_node_tls_client_server_ok.config"]],
-
-    FileBroken =
-        ?config(data_dir, Config) ++ "inter_node_tls_broken.config",
-    InitArgsBroken =
-        [{proto_dist, ["inet_tls"]}, {ssl_dist_optfile, [FileBroken]}],
-    ?assertEqual([], replication_over_tls_configuration(InitArgsBroken)),
-
-    FileNotFound =
-        ?config(data_dir, Config) ++ "inter_node_tls_not_found.config",
-    InitArgsNotFound =
-        [{proto_dist, ["inet_tls"]}, {ssl_dist_optfile, [FileNotFound]}],
-    ?assertEqual([],
-                 replication_over_tls_configuration(InitArgsNotFound)),
-
-    ok.
-
-replication_over_tls_configuration(Args) ->
-    osiris_util:replication_over_tls_configuration(Args,
-                                                   fun tls_replication_log/3).
-
-tls_replication_log(_Level, Fmt, Args) ->
-    ct:log(Fmt, Args).
+    AdvancedConfigFile = ?config(data_dir, Config) ++ "advanced.config",
+    ?assertEqual(ExpectedOkConfig, ssl_consult:consult(AdvancedConfigFile)).
