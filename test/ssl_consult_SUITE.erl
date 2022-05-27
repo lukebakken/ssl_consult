@@ -51,21 +51,20 @@ end_per_testcase(_TestCase, _Config) ->
 %%%===================================================================
 
 consult_file(Config) ->
-    ExpectedOkConfig =
-        [{replication_transport, ssl},
-         {replication_server_ssl_options,
-          [{cacertfile, "/etc/rabbitmq/ca_certificate.pem"},
-           {certfile, "/etc/rabbitmq/server_certificate.pem"},
-           {keyfile, "/etc/rabbitmq/server_key.pem"},
-           {secure_renegotiate, true},
-           {verify, verify_peer},
-           {fail_if_no_peer_cert, true}]},
-         {replication_client_ssl_options,
-          [{cacertfile, "/etc/rabbitmq/ca_certificate.pem"},
-           {certfile, "/etc/rabbitmq/client_certificate.pem"},
-           {keyfile, "/etc/rabbitmq/client_key.pem"},
-           {secure_renegotiate, true},
-           {verify, verify_peer},
-           {fail_if_no_peer_cert, true}]}],
+    MatchFun = public_key:pkix_verify_hostname_match_fun(https),
     AdvancedConfigFile = ?config(data_dir, Config) ++ "advanced.config",
-    ?assertEqual(ExpectedOkConfig, ssl_consult:consult(AdvancedConfigFile)).
+    AdvancedConfig = ssl_consult:consult(AdvancedConfigFile),
+    ?assertMatch([{rabbit,
+                   [{log, [{console, [{enabled, true}, {level, debug}]}]},
+                    {loopback_users, []},
+                    {ssl_listeners, [5671]},
+                    {ssl_options,
+                     [{cacertfile, "/path/to/certs/ca_certificate.pem"},
+                      {certfile, "/path/to/certs/server_certificate.pem"},
+                      {keyfile, "/path/to/certs/server_key.pem"},
+                      {fail_if_no_peer_cert, true},
+                      {verify, verify_peer},
+                      {customize_hostname_check, [{match_fun, MatchFun}]}]},
+                    {background_gc_enabled, true},
+                    {background_gc_target_interval, 1000}]}],
+                 AdvancedConfig).

@@ -14,16 +14,16 @@ consult(File) ->
         {ok, Binary, _FullName} ->
             Encoding =
                 case epp:read_encoding_from_binary(Binary) of
-                    none -> latin1;
-                    Enc -> Enc
+                    none ->
+                        latin1;
+                    Enc ->
+                        Enc
                 end,
             case unicode:characters_to_list(Binary, Encoding) of
                 {error, _String, Rest} ->
-                    error(
-                      {bad_ssl_dist_optfile, {encoding_error, Rest}});
+                    error({bad_ssl_dist_optfile, {encoding_error, Rest}});
                 {incomplete, _String, Rest} ->
-                    error(
-                      {bad_ssl_dist_optfile, {encoding_incomplete, Rest}});
+                    error({bad_ssl_dist_optfile, {encoding_incomplete, Rest}});
                 String when is_list(String) ->
                     consult_string(String)
             end;
