@@ -69,7 +69,6 @@ consult_file(Config) ->
                  AdvancedConfig).
 
 consult_badfile(Config) ->
-    MatchFun = public_key:pkix_verify_hostname_match_fun(https),
     AdvancedConfigPath =
         filename:join(?config(data_dir, Config), "bad-advanced.config"),
     ?assertError({badfile, {error, undef}},
