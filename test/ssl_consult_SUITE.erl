@@ -10,8 +10,6 @@
 -compile(nowarn_export_all).
 -compile(export_all).
 
--export([]).
-
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
@@ -52,8 +50,11 @@ end_per_testcase(_TestCase, _Config) ->
 
 consult_file(Config) ->
     MatchFun = public_key:pkix_verify_hostname_match_fun(https),
-    AdvancedConfigFile = ?config(data_dir, Config) ++ "advanced.config",
-    AdvancedConfig = ssl_consult:consult(AdvancedConfigFile),
+
+    AdvancedConfigPath =
+        filename:join(?config(data_dir, Config), "advanced.config"),
+    AdvancedConfig = ssl_consult:consult_file(AdvancedConfigPath),
+
     ?assertMatch([{rabbit,
                    [{log, [{console, [{enabled, true}, {level, debug}]}]},
                     {loopback_users, []},

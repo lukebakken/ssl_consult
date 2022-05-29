@@ -7,10 +7,15 @@
 
 -module(ssl_consult).
 
--export([consult/1]).
+-export([consult_file/1,
+         consult_string/1]).
 
-consult(File) ->
-    case erl_prim_loader:get_file(File) of
+%%
+%% API
+%%
+
+consult_file(Path) ->
+    case erl_prim_loader:get_file(Path) of
         {ok, Binary, _FullName} ->
             Encoding =
                 case epp:read_encoding_from_binary(Binary) of
@@ -28,7 +33,7 @@ consult(File) ->
                     consult_string(String)
             end;
         error ->
-            error({bad_ssl_dist_optfile, File})
+            error({bad_ssl_dist_optfile, Path})
     end.
 
 consult_string(String) ->
@@ -39,17 +44,21 @@ consult_string(String) ->
             consult_tokens(Tokens)
     end.
 
+%%
+%% Implementation
+%%
+
 consult_tokens(Tokens) ->
     case erl_parse:parse_exprs(Tokens) of
         {error, Info} ->
             error({bad_ssl_dist_optfile, {parse_error, Info}});
         {ok, [Expr]} ->
-            consult_expr(Expr);
+            consult_expression(Expr);
         {ok, Other} ->
             error({bad_ssl_dist_optfile, {parse_error, Other}})
     end.
 
-consult_expr(Expr) ->
+consult_expression(Expr) ->
     {value, Value, Bs} = erl_eval:expr(Expr, erl_eval:new_bindings()),
     case erl_eval:bindings(Bs) of
         [] ->
