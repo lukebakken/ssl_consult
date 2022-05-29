@@ -1,0 +1,8 @@
+{application,ssl_consult,
+             [{description,"ssl_consult library"},
+              {vsn,"1.0.0"},
+              {licenses,["Apache","MPL"]},
+              {links,[{"github","https://github.com/lukebakken/ssl_consult"}]},
+              {modules,[ssl_consult]},
+              {applications,[kernel,stdlib]},
+              {env,[]}]}.

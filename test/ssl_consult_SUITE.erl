@@ -21,7 +21,7 @@ all() ->
     [{group, tests}].
 
 all_tests() ->
-    [consult_file].
+    [consult_file, consult_badfile].
 
 groups() ->
     [{tests, [], all_tests()}].
@@ -50,11 +50,9 @@ end_per_testcase(_TestCase, _Config) ->
 
 consult_file(Config) ->
     MatchFun = public_key:pkix_verify_hostname_match_fun(https),
-
     AdvancedConfigPath =
         filename:join(?config(data_dir, Config), "advanced.config"),
     AdvancedConfig = ssl_consult:consult_file(AdvancedConfigPath),
-
     ?assertMatch([{rabbit,
                    [{log, [{console, [{enabled, true}, {level, debug}]}]},
                     {loopback_users, []},
@@ -69,3 +67,10 @@ consult_file(Config) ->
                     {background_gc_enabled, true},
                     {background_gc_target_interval, 1000}]}],
                  AdvancedConfig).
+
+consult_badfile(Config) ->
+    MatchFun = public_key:pkix_verify_hostname_match_fun(https),
+    AdvancedConfigPath =
+        filename:join(?config(data_dir, Config), "bad-advanced.config"),
+    ?assertError({badfile, {error, undef}},
+                 ssl_consult:consult_file(AdvancedConfigPath)).

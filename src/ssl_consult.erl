@@ -26,20 +26,20 @@ consult_file(Path) ->
                 end,
             case unicode:characters_to_list(Binary, Encoding) of
                 {error, _String, Rest} ->
-                    error({bad_ssl_dist_optfile, {encoding_error, Rest}});
+                    error({badfile, {encoding_error, Rest}});
                 {incomplete, _String, Rest} ->
-                    error({bad_ssl_dist_optfile, {encoding_incomplete, Rest}});
+                    error({badfile, {encoding_incomplete, Rest}});
                 String when is_list(String) ->
                     consult_string(String)
             end;
         error ->
-            error({bad_ssl_dist_optfile, Path})
+            error({badfile, Path})
     end.
 
 consult_string(String) ->
     case erl_scan:string(String) of
         {error, Info, Location} ->
-            error({bad_ssl_dist_optfile, {scan_error, Info, Location}});
+            error({badfile, {scan_error, Info, Location}});
         {ok, Tokens, _EndLocation} ->
             consult_tokens(Tokens)
     end.
@@ -51,18 +51,24 @@ consult_string(String) ->
 consult_tokens(Tokens) ->
     case erl_parse:parse_exprs(Tokens) of
         {error, Info} ->
-            error({bad_ssl_dist_optfile, {parse_error, Info}});
+            error({badfile, {parse_error, Info}});
         {ok, [Expr]} ->
             consult_expression(Expr);
         {ok, Other} ->
-            error({bad_ssl_dist_optfile, {parse_error, Other}})
+            error({badfile, {parse_error, Other}})
     end.
 
 consult_expression(Expr) ->
-    {value, Value, Bs} = erl_eval:expr(Expr, erl_eval:new_bindings()),
+    {value, Value, Bs} =
+        try
+            erl_eval:expr(Expr, erl_eval:new_bindings())
+        catch
+            Class:Error ->
+                error({badfile, {Class, Error}})
+        end,
     case erl_eval:bindings(Bs) of
         [] ->
             Value;
         Other ->
-            error({bad_ssl_dist_optfile, {bindings, Other}})
+            error({badfile, {bindings, Other}})
     end.

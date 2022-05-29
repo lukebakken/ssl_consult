@@ -18,3 +18,16 @@ jobs:
         otp-version: ${{ matrix.erlang_version }}
     - run: make
     - run: make check
+  build-win32:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        erlang_version: [23, 24, 25]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: erlef/setup-beam@v1
+      with:
+        otp-version: ${{ matrix.erlang_version }}
+        rebar3-version: 3.18
+    - run: rebar3 ct
